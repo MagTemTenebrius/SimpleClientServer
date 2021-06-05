@@ -1,8 +1,4 @@
-//
-// Created by tenebrius on 05.06.2021.
-//
-
-#include "console.h"
+#include "util.h"
 
 void util::out(const char *message, ...) {
     char buf[256];

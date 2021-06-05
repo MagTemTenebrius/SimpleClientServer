@@ -1,147 +1,77 @@
 #ifndef UNICODE
-#define UNICODE 1
+#define UNICODE
 #endif
 
-// link with Ws2_32.lib
-#pragma comment(lib, "WS2_32")
+#include <windows.h>
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
+INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR pCmdLine, INT nCmdShow) {
+
+    // Register the window class.
+    const wchar_t CLASS_NAME[] = L"ClientServer";
+
+    WNDCLASS wc = {};
+
+    wc.lpfnWndProc = WindowProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = CLASS_NAME;
+
+    RegisterClass(&wc);
+
+    int width = 700;
+    int height = 400;
+
+    HWND hwnd = CreateWindowEx(
+            0,                              // Optional window styles.
+            CLASS_NAME,                     // Window class
+            L"ClientServer",    // Window text
+            WS_OVERLAPPEDWINDOW,            // Window style
+            // Size and position
+            (1920 - width) / 2, (1080 - height) / 2, width, height,
+            NULL,       // Parent window
+            NULL,       // Menu
+            hInstance,  // Instance handle
+            NULL        // Additional application data
+    );
+
+    if (hwnd == NULL) {
+        return 0;
+    }
+
+    HWND hWndEdit = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Login"), TEXT("Login"),
+                                   WS_CHILD | WS_VISIBLE, 100, 20, 140,
+                                   20, hwnd, NULL, NULL, NULL);
+
+
+    ShowWindow(hwnd, nCmdShow);
+
+    // Run the message loop.
+    MSG msg = {};
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
     return 0;
 }
 
-int __cdecl wmain(int argc, wchar_t **argv) {
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
 
-    //-----------------------------------------
-    // Declare and initialize variables
-    WSADATA wsaData = {0};
-    int iResult = 0;
+        case WM_PAINT: {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
 
-//    int i = 1;
-
-    SOCKET sock = INVALID_SOCKET;
-    int iFamily = AF_UNSPEC;
-    int iType = 0;
-    int iProtocol = 0;
-
-    // Validate the parameters
-    if (argc != 4) {
-        wprintf(L"usage: %s <addressfamily> <type> <protocol>\n", argv[0]);
-        wprintf(L"socket opens a socket for the specified family, type, & protocol\n");
-        wprintf(L"%ws example usage\n", argv[0]);
-        wprintf(L"   %ws 0 2 17\n", argv[0]);
-        wprintf(L"   where AF_UNSPEC=0 SOCK_DGRAM=2 IPPROTO_UDP=17\n", argv[0]);
-        return 1;
-    }
-
-    iFamily = _wtoi(argv[1]);
-    iType = _wtoi(argv[2]);
-    iProtocol = _wtoi(argv[3]);
-
-    // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != 0) {
-        wprintf(L"WSAStartup failed: %d\n", iResult);
-        return 1;
-    }
-
-    wprintf(L"Calling socket with following parameters:\n");
-    wprintf(L"  Address Family = ");
-    switch (iFamily) {
-        case AF_UNSPEC:
-            wprintf(L"Unspecified");
-            break;
-        case AF_INET:
-            wprintf(L"AF_INET (IPv4)");
-            break;
-        case AF_INET6:
-            wprintf(L"AF_INET6 (IPv6)");
-            break;
-        case AF_NETBIOS:
-            wprintf(L"AF_NETBIOS (NetBIOS)");
-            break;
-        case AF_BTH:
-            wprintf(L"AF_BTH (Bluetooth)");
-            break;
-        default:
-            wprintf(L"Other");
-            break;
-    }
-    wprintf(L" (%d)\n", iFamily);
-
-    wprintf(L"  Socket type = ");
-    switch (iType) {
-        case 0:
-            wprintf(L"Unspecified");
-            break;
-        case SOCK_STREAM:
-            wprintf(L"SOCK_STREAM (stream)");
-            break;
-        case SOCK_DGRAM:
-            wprintf(L"SOCK_DGRAM (datagram)");
-            break;
-        case SOCK_RAW:
-            wprintf(L"SOCK_RAW (raw)");
-            break;
-        case SOCK_RDM:
-            wprintf(L"SOCK_RDM (reliable message datagram)");
-            break;
-        case SOCK_SEQPACKET:
-            wprintf(L"SOCK_SEQPACKET (pseudo-stream packet)");
-            break;
-        default:
-            wprintf(L"Other");
-            break;
-    }
-    wprintf(L" (%d)\n", iType);
-
-    wprintf(L"  Protocol = %d = ", iProtocol);
-    switch (iProtocol) {
-        case 0:
-            wprintf(L"Unspecified");
-            break;
-        case IPPROTO_ICMP:
-            wprintf(L"IPPROTO_ICMP (ICMP)");
-            break;
-        case IPPROTO_IGMP:
-            wprintf(L"IPPROTO_IGMP (IGMP)");
-            break;
-        case IPPROTO_TCP:
-            wprintf(L"IPPROTO_TCP (TCP)");
-            break;
-        case IPPROTO_UDP:
-            wprintf(L"IPPROTO_UDP (UDP)");
-            break;
-        case IPPROTO_ICMPV6:
-            wprintf(L"IPPROTO_ICMPV6 (ICMP Version 6)");
-            break;
-        default:
-            wprintf(L"Other");
-            break;
-    }
-    wprintf(L" (%d)\n", iProtocol);
-
-    sock = socket(iFamily, iType, iProtocol);
-    if (sock == INVALID_SOCKET)
-        wprintf(L"socket function failed with error = %d\n", WSAGetLastError());
-    else {
-        wprintf(L"socket function succeeded\n");
-
-        // Close the socket to release the resources associated
-        // Normally an application calls shutdown() before closesocket
-        //   to  disables sends or receives on a socket first
-        // This isn't needed in this simple sample
-        iResult = closesocket(sock);
-        if (iResult == SOCKET_ERROR) {
-            wprintf(L"closesocket failed with error = %d\n", WSAGetLastError());
-            WSACleanup();
-            return 1;
+            // All painting occurs here, between BeginPaint and EndPaint.
+            FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW + 1));
+            EndPaint(hwnd, &ps);
         }
+            return 0;
     }
 
-    WSACleanup();
-
-    return 0;
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
