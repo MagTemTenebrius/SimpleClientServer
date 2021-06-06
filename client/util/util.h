@@ -8,7 +8,13 @@
 #include <windows.h>
 
 namespace util {
-    void out(const char* message,...);
+    void out(const char *message, ...);
+
+    size_t to_narrow(const wchar_t *src, char *dest, size_t dest_len);
+
+    wchar_t *charToTchar(const char *src);
+
+    void appendConsole(const HWND &hwnd, TCHAR *newText);
 }
 
 
