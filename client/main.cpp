@@ -104,10 +104,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         case WM_COMMAND:
             WCHAR buf[256];
             if (LOWORD(wParam) == hwndButtonID) {
+                WCHAR buf[128];
+                int cTxtLen = GetWindowTextLength(hCommandEdit);
+                GetWindowText(hCommandEdit, buf, cTxtLen + 1);
                 client.sendData(buf);
+                return 0;
             } else if (LOWORD(wParam) == hwndButtonConnectID) {
                 client.createAndConnect();
                 pDataArray->socket = client.ConnectSocket;
+                pDataArray->hwnd = hConsoleEdit;
                 HANDLE hThread = CreateThread(
                         NULL,                   // default security attributes
                         0,                      // use default stack size
@@ -115,7 +120,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                         pDataArray,          // argument to thread function
                         0,                      // use default creation flags
                         nullptr);   // returns the thread identifier
-
+                return 0;
             }
             return 0;
 

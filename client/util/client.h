@@ -13,8 +13,12 @@
 
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
+#define PORT 8888
+#define SERVERADDR "127.0.0.1"
+
 typedef struct MyData {
     SOCKET socket;
+    HWND hwnd;
 } MYDATA, *PMYDATA;
 
 class Client {
