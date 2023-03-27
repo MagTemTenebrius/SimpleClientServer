@@ -152,3 +152,46 @@ DWORD WINAPI readData(LPVOID lpParam) {
     }
     return 0;
 }
+
+
+BOOL Client::IsSystem() {
+    char buffer[1024];
+    HANDLE hToken = NULL;
+    BOOL result = false;
+    TOKEN_USER *tokenUser = NULL;
+    DWORD dwLength = 0;
+
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken) == 0) {
+        sprintf(buffer, "OpenProcessToken(): %d\n", GetLastError());
+        util::appendConsole(outHWND, buffer);
+        goto cleanup;
+    }
+
+    if (GetTokenInformation(hToken, TokenUser, (LPVOID) tokenUser, 0, &dwLength) == 0) {
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+            sprintf(buffer, "GetTokenInformation(): %d\n", GetLastError());
+            util::appendConsole(outHWND, buffer);
+            goto cleanup;
+        }
+
+        tokenUser = (TOKEN_USER *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwLength);
+        if (tokenUser == NULL) {
+            goto cleanup;
+        }
+
+        if (GetTokenInformation(hToken, TokenUser, (LPVOID) tokenUser, dwLength, &dwLength) == 0) {
+            sprintf(buffer, "GetTokenInformation(): %d\n", GetLastError());
+            util::appendConsole(outHWND, buffer);
+            goto cleanup;
+        }
+
+        result = IsWellKnownSid(tokenUser->User.Sid, WinLocalSystemSid);
+    }
+
+    cleanup:
+    if (tokenUser != NULL) {
+        HeapFree(GetProcessHeap(), NULL, tokenUser);
+    }
+
+    return result;
+}

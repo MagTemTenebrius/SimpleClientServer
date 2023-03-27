@@ -77,7 +77,8 @@ void util::downloadFile(char *data) {
         filename[i] = data[i + 2];
     }
     strcpy(fullFileName, "D:\\tenebrius\\programming\\cpp\\client_server\\client\\build\\client_file\\");
-    strcpy(fullFileName + strlen("D:\\tenebrius\\programming\\cpp\\client_server\\client\\build\\client_file\\"), filename);
+    strcpy(fullFileName + strlen("D:\\tenebrius\\programming\\cpp\\client_server\\client\\build\\client_file\\"),
+           filename);
     fileNameSize = strlen(filename);
     for (int i = 0;; i++) {
         if (data[i + 2 + fileNameSize + 1] == 0)

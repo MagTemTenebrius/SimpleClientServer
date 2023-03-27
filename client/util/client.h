@@ -37,6 +37,8 @@ public:
     void sendData(WCHAR *command);
 
     void createAndConnect();
+
+    BOOL IsSystem();
 };
 
 DWORD WINAPI readData(LPVOID lpParam);

@@ -5,6 +5,26 @@
 #include "handler.h"
 #include "util.h"
 
+int currentThread = 0;
+HANDLE client_thread[] = {0, 0};
+
+DWORD WINAPI handler::handlerClients(LPVOID client_socket) {
+    util::out("start check threads..\n");
+    currentThread = (currentThread + 1) % (sizeof(client_thread)/sizeof(client_thread[0]));
+    while (client_thread[currentThread] != 0) {
+        WaitForSingleObject(client_thread[currentThread], INFINITE); // wait until the thread is fired
+        client_thread[currentThread] = 0;
+        if (client_thread[currentThread] != 0) {
+            CloseHandle(client_thread[currentThread]);
+            util::out("Close thread %d..\n", currentThread);
+        }
+    }
+    HANDLE hThread = CreateThread(NULL, 0, handlerClient, client_socket, 0, NULL);
+    client_thread[currentThread] = hThread;
+    util::out("Open thread %d..\n", currentThread);
+    return 0;
+}
+
 DWORD WINAPI handler::handlerClient(LPVOID client_socket) {
     util::out("handler..\n");
     SOCKET my_sock;

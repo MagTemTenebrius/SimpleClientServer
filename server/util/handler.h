@@ -8,7 +8,10 @@
 #include <windows.h>
 
 namespace handler {
+
     DWORD WINAPI handlerClient(LPVOID client_socket);
+
+    DWORD WINAPI handlerClients(LPVOID client_socket);
 };
 
 

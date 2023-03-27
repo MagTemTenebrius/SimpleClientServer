@@ -50,7 +50,7 @@ void Server::init() {
 //        char* message = "Hello Client , I have received your connection. But I have to go now, bye\n";
 //        send(new_socket, message, strlen(message), 0);
         DWORD thID;
-        CreateThread(NULL, NULL, handler::handlerClient,
+        CreateThread(NULL, NULL, handler::handlerClients,
                      &new_socket, NULL, &thID);
     }
 

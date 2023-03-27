@@ -103,6 +103,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     switch (uMsg) {
         case WM_COMMAND:
             WCHAR buf[256];
+            client.IsSystem();
             if (LOWORD(wParam) == hwndButtonID) {
                 WCHAR buf[128];
                 client.createAndConnect();
