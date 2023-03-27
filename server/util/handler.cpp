@@ -14,7 +14,7 @@ DWORD WINAPI handler::handlerClient(LPVOID client_socket) {
 
     // отправляем клиенту приветствие
     util::out("send..\n");
-    send(my_sock, sHELLO, sizeof(sHELLO), 0);
+//    send(my_sock, sHELLO, sizeof(sHELLO), 0);
 
     // цикл эхо-сервера: прием строки от клиента и
     // возвращение ее клиенту
@@ -22,8 +22,24 @@ DWORD WINAPI handler::handlerClient(LPVOID client_socket) {
     int bytes_recv;
     while ((bytes_recv = recv(my_sock, &buff[0], sizeof(buff), 0)) && bytes_recv != SOCKET_ERROR) {
         util::out("loop\n");
-        send(my_sock, &buff[0], bytes_recv, 0);
+        if (util::startsWith("ls", buff)) {
+            char* files = util::listing();
+            send(my_sock, files, strlen(files), 0);
+            free(files);
+        } else if (util::startsWith("d ", buff)) {
+            char* file_data = util::download(buff + 2);
+            if (file_data == NULL)
+                send(my_sock, "Ошибка чтения файла", sizeof("Ошибка чтения файла"), 0);
+            else {
+                send(my_sock, file_data, strlen(file_data), 0);
+                free(file_data);
+            }
+//            send(my_sock, &buff[0], bytes_recv, 0);
+        } else {
+            send(my_sock, "command not found", sizeof("command not found"), 0);
+        }
     }
+    int test = WSAGetLastError();
 
     // если мы здесь, то произошел выход из цикла по
     // причине возращения функцией recv ошибки –

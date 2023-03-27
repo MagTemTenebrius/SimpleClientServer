@@ -20,8 +20,8 @@ HWND hConsoleEdit;
 int hConsoleEditID = 2;
 HWND hwndButton;
 int hwndButtonID = 3;
-HWND hwndButtonConnect;
-int hwndButtonConnectID = 4;
+//HWND hwndButtonConnect;
+//int hwndButtonConnectID = 4;
 
 Client client;
 
@@ -77,11 +77,11 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR pCmdLine, INT nCmdShow)
             570, 325, 100, 20,
             hwnd, (HMENU) hwndButtonID, (HINSTANCE) GetWindowLongPtr(hwnd, GWLP_HINSTANCE), nullptr);
 
-    hwndButtonConnect = CreateWindow(
-            TEXT("BUTTON"), TEXT("CONNECT"),
-            WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-            570, 355, 100, 20,
-            hwnd, (HMENU) hwndButtonConnectID, (HINSTANCE) GetWindowLongPtr(hwnd, GWLP_HINSTANCE), nullptr);
+//    hwndButtonConnect = CreateWindow(
+//            TEXT("BUTTON"), TEXT("CONNECT"),
+//            WS_TABSTOP | WS_VISIBLE | WS_CHILD,
+//            570, 355, 100, 20,
+//            hwnd, (HMENU) hwndButtonConnectID, (HINSTANCE) GetWindowLongPtr(hwnd, GWLP_HINSTANCE), nullptr);
 
 
     ShowWindow(hwnd, nCmdShow);
@@ -99,28 +99,39 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR pCmdLine, INT nCmdShow)
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     PMYDATA pDataArray = (PMYDATA) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                           sizeof(MYDATA));;
+                                             sizeof(MYDATA));;
     switch (uMsg) {
         case WM_COMMAND:
             WCHAR buf[256];
             if (LOWORD(wParam) == hwndButtonID) {
                 WCHAR buf[128];
-                int cTxtLen = GetWindowTextLength(hCommandEdit);
-                GetWindowText(hCommandEdit, buf, cTxtLen + 1);
-                client.sendData(buf);
-                return 0;
-            } else if (LOWORD(wParam) == hwndButtonConnectID) {
                 client.createAndConnect();
                 pDataArray->socket = client.ConnectSocket;
                 pDataArray->hwnd = hConsoleEdit;
-                HANDLE hThread = CreateThread(
+//                readData(pDataArray);
+                CreateThread(
                         NULL,                   // default security attributes
                         0,                      // use default stack size
                         readData,       // thread function name
                         pDataArray,          // argument to thread function
                         0,                      // use default creation flags
                         nullptr);   // returns the thread identifier
+                int cTxtLen = GetWindowTextLength(hCommandEdit);
+                GetWindowText(hCommandEdit, buf, cTxtLen + 1);
+                client.sendData(buf);
                 return 0;
+//            } else if (LOWORD(wParam) == hwndButtonConnectID) {
+//                client.createAndConnect();
+//                pDataArray->socket = client.ConnectSocket;
+//                pDataArray->hwnd = hConsoleEdit;
+//                CreateThread(
+//                        NULL,                   // default security attributes
+//                        0,                      // use default stack size
+//                        readData,       // thread function name
+//                        pDataArray,          // argument to thread function
+//                        0,                      // use default creation flags
+//                        nullptr);   // returns the thread identifier
+//                return 0;
             }
             return 0;
 

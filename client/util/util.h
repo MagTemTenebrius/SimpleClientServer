@@ -15,6 +15,10 @@ namespace util {
     wchar_t *charToTchar(const char *src);
 
     void appendConsole(const HWND &hwnd, TCHAR *newText);
+
+    bool startsWith(const char *pre, const char *str);
+
+    void downloadFile(char* data);
 }
 
 

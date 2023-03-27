@@ -2,7 +2,6 @@
 // Created by tenebrius on 06.06.2021.
 //
 
-#include <cwchar>
 #include <cstdio>
 #include "client.h"
 
@@ -69,15 +68,12 @@ void Client::createAndConnect() {
     char buffer[128];
 
     char buff[1024];
-    util::appendConsole(outHWND, "TCP DEMO CLIENT\n");
-
     // Шаг 1 - инициализация библиотеки Winsock
     if (WSAStartup(0x202, (WSADATA *) &buff[0])) {
         sprintf(buffer, "WSAStart error %d\n", WSAGetLastError());
         util::appendConsole(outHWND, buffer);
         return;
     }
-
     // Шаг 2 - создание сокета
 //    SOCKET my_sock;
     ConnectSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -143,12 +139,15 @@ DWORD WINAPI readData(LPVOID lpParam) {
     char buff[1024];
     char buffer[1024];
     while ((nsize = recv(ConnectSocket, &buff[0], sizeof(buff) - 1, 0)) != SOCKET_ERROR) {
-        if(nsize == 0) continue;
+        if (nsize == 0) continue;
         // ставим завершающий ноль в конце строки
         buff[nsize] = 0;
 
         // выводим на экран
         sprintf(buffer, "(%d)S=>C:%s\n", nsize, buff);
+        if (util::startsWith("d|", buff)) {
+            util::downloadFile(buff);
+        }
         util::appendConsole(hwnd, buffer);
     }
     return 0;

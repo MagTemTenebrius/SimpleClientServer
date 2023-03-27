@@ -8,7 +8,13 @@
 #include <windows.h>
 
 namespace util {
-    void out(const char* message,...);
+    void out(const char *message, ...);
+
+    bool startsWith(const char *pre, const char *str);
+
+    char* listing();
+
+    char* download(char* filename);
 }
 
 

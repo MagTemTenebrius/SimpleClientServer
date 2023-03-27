@@ -47,11 +47,11 @@ void Server::init() {
                   client.sin_port);
 
         //Reply to the client
-        char* message = "Hello Client , I have received your connection. But I have to go now, bye\n";
-        send(new_socket, message, strlen(message), 0);
+//        char* message = "Hello Client , I have received your connection. But I have to go now, bye\n";
+//        send(new_socket, message, strlen(message), 0);
         DWORD thID;
         CreateThread(NULL, NULL, handler::handlerClient,
-                     &client, NULL, &thID);
+                     &new_socket, NULL, &thID);
     }
 
     if (new_socket == INVALID_SOCKET) {
