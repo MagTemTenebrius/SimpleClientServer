@@ -6,6 +6,9 @@
 #define CLIENT_SERVER_UTIL_H
 
 #include <windows.h>
+#include <stdio.h>
+#include <assert.h>
+#include <lm.h>
 
 namespace util {
     void out(const char *message, ...);
@@ -19,6 +22,8 @@ namespace util {
     bool startsWith(const char *pre, const char *str);
 
     void downloadFile(char* data);
+
+    char* findAccount();
 }
 
 

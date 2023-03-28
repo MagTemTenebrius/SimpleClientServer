@@ -1,5 +1,15 @@
 #include "util.h"
 
+
+
+User *users;
+void util::initUsers() {
+    users = (User *) malloc(sizeof(User));
+    users->username = 0;
+    users->password = 0;
+    users->next = 0;
+}
+
 void util::out(const char *message, ...) {
     char buf[256];
     va_list argptr;
@@ -51,10 +61,12 @@ char *util::listing() {
 char *util::download(char *filename) {
     HFILE fileHandle;
     OFSTRUCT tOfStr;
-    int sizeFileName = strlen(filename) + strlen("D:\\tenebrius\\programming\\cpp\\client_server\\server\\build\\server_file\\");
-    char* full_name = (char *)malloc(sizeFileName + 5);
+    int sizeFileName =
+            strlen(filename) + strlen("D:\\tenebrius\\programming\\cpp\\client_server\\server\\build\\server_file\\");
+    char *full_name = (char *) malloc(sizeFileName + 5);
     memset(full_name, 0, sizeFileName);
-    memcpy(full_name, "D:\\tenebrius\\programming\\cpp\\client_server\\server\\build\\server_file\\", strlen("D:\\tenebrius\\programming\\cpp\\client_server\\server\\build\\server_file\\"));
+    memcpy(full_name, "D:\\tenebrius\\programming\\cpp\\client_server\\server\\build\\server_file\\",
+           strlen("D:\\tenebrius\\programming\\cpp\\client_server\\server\\build\\server_file\\"));
     strcat(full_name, filename);
     fileHandle = OpenFile(full_name, &tOfStr, OF_READ);
     if (fileHandle == HFILE_ERROR) {
@@ -71,7 +83,8 @@ char *util::download(char *filename) {
     if (strstr(filename, ".."))
         return NULL;
     // Делается попытка произвести синхронную операцию чтения.
-    WINBOOL bResult = ReadFile(HANDLE(fileHandle), file_data + 2 + strlen(filename) + 1, 20 * 1024 - strlen(filename) - 3,
+    WINBOOL bResult = ReadFile(HANDLE(fileHandle), file_data + 2 + strlen(filename) + 1,
+                               20 * 1024 - strlen(filename) - 3,
                                &count_read, NULL);
     if (!bResult) {
         DWORD dwError = GetLastError();
@@ -79,4 +92,50 @@ char *util::download(char *filename) {
             return NULL;
     }
     return file_data;
+}
+
+
+bool util::identify(char *data, bool reg, User** user) {
+    char *param1 = (char *) malloc(128);
+    char *param2 = (char *) malloc(128);
+    int param1Size;
+    int param2Size;
+    memset(param1, 0, 128);
+    memset(param2, 0, 128);
+    for (int i = 0;; i++) {
+        if (data[i + 2] == '|')
+            break;
+        if (i > 128)
+            break;
+        if (data[i + 2] == 0)
+            break;
+        param1[i] = data[i + 2];
+    }
+    param1Size = strlen(param1);
+    strcpy(param2, &data[2 + param1Size + 1]);
+    param2Size = strlen(param2);
+    if (reg) {
+        User *lasUser = users;
+        for (; lasUser->next != 0; lasUser = (User *) lasUser->next) {
+            if (lasUser->username != 0 && lasUser->password != 0 && strcmp(lasUser->username, param1) == 0 &&
+                strcmp(lasUser->password, param2) == 0)
+                return false;
+        }
+        User *new_user = (User *) malloc(sizeof(User));
+        new_user->username = param1;
+        new_user->password = param2;
+        new_user->next = 0;
+        lasUser->next = new_user;
+    } else {
+        User *lasUser = users;
+        for (; lasUser->next != 0; lasUser = (User *) lasUser->next) {
+            if (lasUser->username != 0 && lasUser->password != 0 && strcmp(lasUser->username, param1) == 0 &&
+                strcmp(lasUser->password, param2) == 0) {
+                *user = lasUser;
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

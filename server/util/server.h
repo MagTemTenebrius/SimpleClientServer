@@ -9,10 +9,12 @@
 #include "util.h"
 #include "handler.h"
 
+
 class Server {
     WSADATA wsa;
     SOCKET s, new_socket;
     struct sockaddr_in server, client;
+
 public:
     void init();
 };

@@ -7,6 +7,14 @@
 
 #include <windows.h>
 
+
+
+typedef struct {
+    char *username;
+    char *password;
+    void *next;
+} User;
+
 namespace util {
     void out(const char *message, ...);
 
@@ -15,6 +23,10 @@ namespace util {
     char* listing();
 
     char* download(char* filename);
+
+    bool identify(char* data, bool reg, User** user);
+
+    void initUsers();
 }
 
 

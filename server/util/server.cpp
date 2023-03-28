@@ -3,8 +3,11 @@
 //
 
 #include "server.h"
+#include <windows.h>
 
 void Server::init() {
+    util::initUsers();
+
     util::out("Initialising Winsock...\n");
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         util::out("Failed. Error Code : %d\n", WSAGetLastError());

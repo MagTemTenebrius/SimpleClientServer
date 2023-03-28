@@ -18,12 +18,19 @@ void Client::close() {
 void Client::sendData(WCHAR *command) {
     int iResult;
     // Send an initial buffer
-    char c_command[128];
+    char c_command[256];
     char buffer[256];
     char buf[256];
     char recvbuf[512];
+    char* userInfo;
+    memset(c_command, 0, 256);
     util::to_narrow(command, c_command, 128);
     sprintf(buf, "Command `%s`...\n", c_command);
+    if (!strcmp(c_command, "r") || !strcmp(c_command, "i")) {
+        userInfo = util::findAccount();
+        strcat(c_command, "|");
+        strcat(c_command, userInfo);
+    }
     util::appendConsole(outHWND, buf);
     iResult = send(ConnectSocket, c_command, (int) strlen(c_command), 0);
     if (iResult == SOCKET_ERROR) {

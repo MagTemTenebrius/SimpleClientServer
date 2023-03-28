@@ -2,6 +2,7 @@
 // Created by tenebrius on 06.06.2021.
 //
 
+#include <cstdio>
 #include "handler.h"
 #include "util.h"
 
@@ -41,7 +42,7 @@ DWORD WINAPI handler::handlerClient(LPVOID client_socket) {
     util::out("go loop..\n");
     int bytes_recv;
     while ((bytes_recv = recv(my_sock, &buff[0], sizeof(buff), 0)) && bytes_recv != SOCKET_ERROR) {
-        util::out("loop\n");
+        util::out("Read %s\n", buff);
         if (util::startsWith("ls", buff)) {
             char* files = util::listing();
             send(my_sock, files, strlen(files), 0);
@@ -55,6 +56,23 @@ DWORD WINAPI handler::handlerClient(LPVOID client_socket) {
                 free(file_data);
             }
 //            send(my_sock, &buff[0], bytes_recv, 0);
+        } else if (util::startsWith("i", buff)) {
+            User* lastUserIdent;
+            bool resultLogin = util::identify(buff, false, &lastUserIdent);
+            if (resultLogin) {
+                char hello[256];
+                int lenHello = sprintf(hello, "Добро пожаловать, %s", lastUserIdent->username);
+                send(my_sock, hello, lenHello, 0);
+            } else {
+                send(my_sock, "Пользователь не найден", sizeof("Пользователь не найден"), 0);
+            }
+        } else if (util::startsWith("r", buff)) {
+            bool resultReg = util::identify(buff, true, 0);
+            if (resultReg) {
+                send(my_sock, "Вы успешно зарегались", sizeof("Вы успешно зарегались"), 0);
+            } else {
+                send(my_sock, "Пользователь уже зеган", sizeof("Пользователь уже зеган"), 0);
+            }
         } else {
             send(my_sock, "command not found", sizeof("command not found"), 0);
         }

@@ -8,4 +8,4 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}
 
 add_executable(client WIN32 util/util.h util/util.cpp util/client.h util/client.cpp main.cpp)
 
-target_link_libraries(client wsock32 ws2_32)
+target_link_libraries(client wsock32 ws2_32 netapi32)
