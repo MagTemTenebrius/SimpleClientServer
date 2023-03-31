@@ -34,14 +34,14 @@ public:
 
     void close();
 
-    void sendData(WCHAR *command);
+    void sendData(WCHAR *command, SOCKET my_sock);
 
     void createAndConnect();
 
     BOOL IsSystem();
 };
 
-DWORD WINAPI readData(LPVOID lpParam);
+DWORD WINAPI readData(LPVOID lpParam, Client client, WCHAR *buf);
 
 
 #endif //CLIENT_SERVER_CLIENT_H

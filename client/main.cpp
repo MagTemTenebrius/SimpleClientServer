@@ -110,16 +110,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 pDataArray->socket = client.ConnectSocket;
                 pDataArray->hwnd = hConsoleEdit;
 //                readData(pDataArray);
-                CreateThread(
-                        NULL,                   // default security attributes
-                        0,                      // use default stack size
-                        readData,       // thread function name
-                        pDataArray,          // argument to thread function
-                        0,                      // use default creation flags
-                        nullptr);   // returns the thread identifier
+//                CreateThread(
+//                        NULL,                   // default security attributes
+//                        0,                      // use default stack size
+//                        readData,       // thread function name
+//                        pDataArray,          // argument to thread function
+//                        0,                      // use default creation flags
+//                        nullptr);   // returns the thread identifier
                 int cTxtLen = GetWindowTextLength(hCommandEdit);
                 GetWindowText(hCommandEdit, buf, cTxtLen + 1);
-                client.sendData(buf);
+                readData(pDataArray, client, buf);
                 return 0;
 //            } else if (LOWORD(wParam) == hwndButtonConnectID) {
 //                client.createAndConnect();

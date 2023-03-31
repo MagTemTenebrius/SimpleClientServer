@@ -4,6 +4,9 @@
 
 #include <cstdio>
 #include "client.h"
+#include "diffie.h"
+#include "hmac.h"
+#include "byte.h"
 
 
 void Client::close() {
@@ -15,7 +18,7 @@ void Client::close() {
 }
 
 
-void Client::sendData(WCHAR *command) {
+void Client::sendData(WCHAR *command, SOCKET my_sock) {
     int iResult;
     // Send an initial buffer
     char c_command[256];
@@ -32,6 +35,62 @@ void Client::sendData(WCHAR *command) {
         strcat(c_command, userInfo);
     }
     util::appendConsole(outHWND, buf);
+    // key
+    unsigned int g = 2;
+    unsigned int p = 100;
+    int a;
+    int A = generateNumber(&a, g, p);
+    sprintf(buffer, "Generate a = %d\n", a);
+    util::appendConsole(outHWND, buffer);
+    char result[128];
+    sprintf(result, "%d", A);
+
+    sprintf(buffer, "Send A = %d\n", A);
+    util::appendConsole(outHWND, buffer);
+    iResult = send(ConnectSocket, result, (int) strlen(result), 0);
+    if (iResult == SOCKET_ERROR) {
+        sprintf(buffer, "send failed with error: %d\n", WSAGetLastError());
+        util::appendConsole(outHWND, buffer);
+        closesocket(ConnectSocket);
+        WSACleanup();
+        return;
+    }
+
+    int bytes_recv;
+    unsigned long B;
+    while ((bytes_recv = recv(my_sock, &buf[0], sizeof(buf) - 1, 0)) && bytes_recv != SOCKET_ERROR) {
+        B = atoi(buf);
+        break;
+    }
+
+    sprintf(buffer, "Read B = %d\n", B);
+    util::appendConsole(outHWND, buffer);
+    unsigned long Bh = generateASh(a, B, p);
+//    util::out("SecretKEY Bh = %d\n", Bh);
+    sprintf(buffer, "SecretKEY Bh = %d\n", Bh);
+    util::appendConsole(outHWND, buffer);
+
+//    const char *key = "1234";
+    char key[128];
+    memset(key, 0, 128);
+    itoa(Bh, key, 10);
+    unsigned char bytes[MD5HashSize];
+    hmac_md5((unsigned char *)c_command, strlen(c_command), (unsigned char *)key, strlen(key), bytes);
+
+    char* hashResult = btoa(bytes, MD5HashSize);
+    sprintf(buffer, "hashResult = %s\n", hashResult);
+    util::appendConsole(outHWND, buffer);
+
+    // send hash
+    iResult = send(ConnectSocket, hashResult, (int) strlen(hashResult), 0);
+    if (iResult == SOCKET_ERROR) {
+        sprintf(buffer, "send failed with error: %d\n", WSAGetLastError());
+        util::appendConsole(outHWND, buffer);
+        closesocket(ConnectSocket);
+        WSACleanup();
+        return;
+    }
+    // send command
     iResult = send(ConnectSocket, c_command, (int) strlen(c_command), 0);
     if (iResult == SOCKET_ERROR) {
         sprintf(buffer, "send failed with error: %d\n", WSAGetLastError());
@@ -41,8 +100,44 @@ void Client::sendData(WCHAR *command) {
         return;
     }
 
-    sprintf(buffer, "Bytes Sent: %ld\n", iResult);
-    util::appendConsole(outHWND, buffer);
+    // read hash
+    char hashResultServerSended[128];
+    memset(hashResultServerSended, 0, 128);
+    while ((bytes_recv = recv(my_sock, &hashResultServerSended[0], 128 - 1, 0)) && bytes_recv != SOCKET_ERROR) {
+        sprintf(buffer, "hashResultServerSended: %s\n", hashResultServerSended);
+        util::appendConsole(outHWND, buffer);
+        break;
+    }
+
+    int nsize;
+    char buff[1024];
+    memset(buff, 0, 1024);
+    while ((nsize = recv(ConnectSocket, &buff[0], sizeof(buff) - 1, 0)) != SOCKET_ERROR) {
+
+        hmac_md5((unsigned char *)buff, strlen(buff), (unsigned char *)key, strlen(key), bytes);
+        char * hashResultServer = btoa(bytes, MD5HashSize);
+
+        sprintf(buffer, "hashResultServer: %s\n", hashResultServer);
+        util::appendConsole(outHWND, buffer);
+
+        if (strcmp(hashResultServerSended, hashResultServer) != 0) {
+            sprintf(buffer, "Hash BAD! Returned\n");
+            util::appendConsole(outHWND, buffer);
+            return;
+        }
+
+        // выводим на экран
+        sprintf(buffer, "(%d)S=>C:%s\n", nsize, buff);
+        if (util::startsWith("d|", buff)) {
+            util::downloadFile(buff);
+        }
+        util::appendConsole(outHWND, buffer);
+        break;
+    }
+
+
+
+
 
     // shutdown the connection since no more data will be sent
     iResult = shutdown(ConnectSocket, SD_SEND);
@@ -53,22 +148,6 @@ void Client::sendData(WCHAR *command) {
         WSACleanup();
         return;
     }
-
-    // Receive until the peer closes the connection
-//    do {
-//
-//        iResult = recv(ConnectSocket, recvbuf, 512, 0);
-//        if (iResult > 0) {
-//            sprintf(buffer, "Bytes received: %d\n", iResult);
-//            util::appendConsole(outHWND, buffer);
-//        } else if (iResult == 0) {
-//            util::appendConsole(outHWND, "Connection closed\n");
-//        } else {
-//            sprintf(buffer, "recv failed with error: %d\n", WSAGetLastError());
-//            util::appendConsole(outHWND, buffer);
-//        }
-//
-//    } while (iResult > 0);
 }
 
 void Client::createAndConnect() {
@@ -138,25 +217,28 @@ void Client::setOutput(HWND outHwnd, HMENU outID) {
     this->outID = outID;
 }
 
-DWORD WINAPI readData(LPVOID lpParam) {
+DWORD WINAPI readData(LPVOID lpParam, Client client, WCHAR *buf) {
     SOCKET ConnectSocket = ((PMYDATA) lpParam)->socket;
     HWND hwnd = ((PMYDATA) lpParam)->hwnd;
     // Шаг 4 - чтение и передача сообщений
     int nsize;
     char buff[1024];
     char buffer[1024];
-    while ((nsize = recv(ConnectSocket, &buff[0], sizeof(buff) - 1, 0)) != SOCKET_ERROR) {
-        if (nsize == 0) continue;
-        // ставим завершающий ноль в конце строки
-        buff[nsize] = 0;
+//    while ((nsize = recv(ConnectSocket, &buff[0], sizeof(buff) - 1, 0)) != SOCKET_ERROR) {
+//        if (nsize == 0) continue;
+//        // ставим завершающий ноль в конце строки
+//        buff[nsize] = 0;
+//
+//        // выводим на экран
+//        sprintf(buffer, "(%d)S=>C:%s\n", nsize, buff);
+//        if (util::startsWith("d|", buff)) {
+//            util::downloadFile(buff);
+//        }
+//        util::appendConsole(hwnd, buffer);
+//    }
+    client.sendData(buf, ConnectSocket);
 
-        // выводим на экран
-        sprintf(buffer, "(%d)S=>C:%s\n", nsize, buff);
-        if (util::startsWith("d|", buff)) {
-            util::downloadFile(buff);
-        }
-        util::appendConsole(hwnd, buffer);
-    }
+
     return 0;
 }
 
